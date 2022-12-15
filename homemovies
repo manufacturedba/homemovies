@@ -1,0 +1,29 @@
+#!/bin/bash
+
+VIDEO_LIST=''
+SUPPORTED_CODEC=h264
+
+echo "Starting search for random video"
+
+# Swap directory with your own
+for i in $(find /mnt/homemovies/ -type f -name '*.mkv' -o -name '*.mp4' -o -name '*.MP4' -o -name '*.wmv' -o -name '*.flv' -o -name '*.webm' -o -name '*.mov'); do
+    codec=$(ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${i}")
+    if [ "$codec" == "$SUPPORTED_CODEC" ]; then
+        VIDEO_LIST+="$i\n"
+    else
+        echo "Video cannot be played"
+    fi
+done
+
+# Enable below if you want to kill any running vidlooper or omxplayer processes
+# They are designed to persist through errors as of 12/2022
+#killall vidlooper
+#killall omxplayer.bin
+
+# Pick only one to avoid enabling vidlooper GPIO logic
+RANDOM_VIDEO=`echo -e $VIDEO_LIST | shuf -n1`
+
+echo "Playing video $RANDOM_VIDEO"
+
+# Default location installed from pip instructions on RPI
+/home/pi/.local/bin/vidlooper --audio local "$RANDOM_VIDEO"
